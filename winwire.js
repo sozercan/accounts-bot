@@ -1,6 +1,8 @@
 var builder = require('botbuilder');
 var request = require('request');
-var platforms = require("./platforms.js");
+var platforms = require("./platforms");
+var backToMenu = require("./backToMenu");
+var emoji = require('node-emoji');
 
 module.exports = {
     Label: 'Winwire information',
@@ -11,11 +13,11 @@ module.exports = {
         function (session, results, next) {
             switch (results.response.index) {
                 case 0:
-                    session.send("Got it! Filtering by industry area :office:...");
+                    session.send("Got it! Filtering by industry area..." + emoji.get("office"));
                     session.dialogData.filter = 0;
                     break;
                 case 1:
-                    session.send("Got it! Filtering by technology :tv:...");
+                    session.send("Got it! Filtering by technology..." + emoji.get("tv"));
                     session.dialogData.filter = 1;
                     break;
                 default:
@@ -77,7 +79,7 @@ module.exports = {
                             ])
                     }
 
-                    session.endDialog();
+                    session.replaceDialog('/backToMenu', { source: 'winwire' });
                 }
             });
         }

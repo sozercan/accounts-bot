@@ -1,6 +1,7 @@
 var builder = require('botbuilder');
 var request = require('request');
-var platforms = require("./platforms.js");
+var platforms = require("./platforms");
+var emoji = require('node-emoji');
 
 module.exports = {
     Label: 'Account information',
@@ -10,7 +11,7 @@ module.exports = {
         },
         function (session, results, next) {
             if (results.response) {
-                session.send('Gotcha! Looking for account %s... :mag_right:', results.response);
+                session.send('Gotcha! Looking for account %s... '  + emoji.get('mag_right'), results.response);
 
                 request({
                     url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,name,description&$filter=contains(name,'"+results.response+"')", 
@@ -48,7 +49,7 @@ module.exports = {
                         next();
                     }
                     else {
-                        session.send("Something happened");
+                        session.send("Something happened " + emoji.get('thunder_cloud_and_rain'));
                         console.log(error);
                     }
                 });
@@ -56,7 +57,7 @@ module.exports = {
         },
 
         function(session) {
-            builder.Prompts.text(session, "Please select an account");
+            builder.Prompts.text(session, "Please select an account above");
         },
         function(session, results, next) {
             if (results.response) {
@@ -77,7 +78,7 @@ module.exports = {
         function(session) {
             builder.Prompts.choice(session, "What would you like to do?", ['Account Information','Opportunities']);
         },
-        function(session, results) {
+        function(session, results, next) {
             switch (results.response.index) {
                 case 0:
                     var data = session.dialogData.accountData;
@@ -99,14 +100,14 @@ module.exports = {
                             accountData.value[0].taps_district, 
                             accountData.value[0].description, 
                             accountData.value[0].statecode);
+
+                            session.replaceDialog('/backToMenu', { source: 'account' });
                         }
                     });
-                    session.endDialog();
                     break;
                 case 1:
                 default:
-                    var platforms = Object.getOwnPropertyNames(platforms.technology);
-                    builder.Prompts.choice(session, "Which type of opportunities are you interested in?", platforms);
+                    builder.Prompts.choice(session, "Which type of opportunities are you interested in?", platforms.technology);
                     break;
             }
         },
@@ -150,10 +151,9 @@ module.exports = {
         },
 
         function(session){
-            builder.Prompts.text(session, "Please select an opportunity");
+            builder.Prompts.text(session, "Please select an opportunity above");
         },
         function(session, results, next) {
-
             var oppData = JSON.parse(session.dialogData.oppData);
             var opp;
 
@@ -169,6 +169,8 @@ module.exports = {
                 session.send("Name: %s  \nStage: %s", 
                 opp.taps_name, 
                 opp.taps_appopportunityid);
+
+                session.replaceDialog('/backToMenu', { source: 'account' });
             }
         }
     ]

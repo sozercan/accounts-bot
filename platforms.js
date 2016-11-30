@@ -1,11 +1,15 @@
 module.exports = {
     technology: {
-        Type1: [],
-        Type2: [],
-        Type3: [],
-        Type4: []
+        Windows: [
+        ],
+        Office: [
+        ],
+        Azure: [
+        ],
+        SQL: [
+        ]
     },
     industry: {
-        type: ["type1", "type2", "type3"]
+        type: [ "Health", "Horizontal", "Education", "FinServ", "Public Sector" ]
     }
 }

@@ -5,6 +5,7 @@ const OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
 const expressSession = require('express-session');
 const crypto = require('crypto');
 const querystring = require('querystring');
+var emoji = require('node-emoji');
 require('dotenv').config();
 
 var telemetryModule = require('./telemetry-module.js');
@@ -132,27 +133,35 @@ function login(session) {
 
   // TODO: Encrypt the address string
   const link = process.env.AUTHBOT_CALLBACKHOST + '/login?address=' + querystring.escape(JSON.stringify(address));
-  builder.Prompts.text(session, "Let's get started! :smiley: Please sign in here: " + link);
 
-  //TODO: signin card
-  //createSigninCard(session, link);
+  var msg = new builder.Message(session) 
+    .attachments([ 
+        new builder.SigninCard(session) 
+            .text("Let's get started! " + emoji.get('smiley') + "\n\nPlease sign-in below...") 
+            .button("Sign-In", link) 
+    ]); 
+  session.send(msg);
 
-  // function createSigninCard(session, link) {
-  //     return new builder.SigninCard(session)
-  //         .text('BotFramework Sign-in Card')
-  //         .button('Sign-in', link)
-  // }
+  builder.Prompts.text(session, "You must first sign into your account.");
 }
 
 // Dialogs
 var Account = require('./account');
 var Winwire = require('./winwire');
 var Logout = require('./logout');
+var backToMenu = require('./backToMenu');
 
 // Setup dialogs
 bot.dialog('/account', Account.Dialog);
 bot.dialog('/winwire', Winwire.Dialog);
 bot.dialog('/logout', Logout.Dialog);
+bot.dialog('/backToMenu', backToMenu.Dialog);
+
+bot.dialog('signin', [
+  (session, results) => {
+    session.endDialog();
+  }
+]);
 
 bot.dialog('/', [
   (session, args, next) => {
@@ -185,15 +194,15 @@ bot.dialog('/', [
           }
       })
 
-      session.send("Welcome " + session.userData.userName + "! :smiley:");
+      session.send("Welcome " + session.userData.userName + "! " + emoji.get('smiley'));
       session.beginDialog('workPrompt');
     } else {
-      session.endConversation("Goodbye! :wave:");
+      session.endConversation("Goodbye! " + emoji.get('wave'));
     }
   },
   (session, results) => {
     if (!session.userData.userName) {
-      session.endConversation("Goodbye! :wave: You have been logged out.");
+      session.endConversation("Goodbye! " + emoji.get('wave') + " You have been logged out.");
     } 
     // else {
     //   session.endConversation("Goodbye!! :wave:");
