@@ -22,13 +22,19 @@ module.exports = {
                     if(!error) {
                         var data = JSON.parse(body);
 
-                        session.send('I found total of %d accounts:', data.value.length);
+                        if(data.value.length > 0) {
+                            session.send('I found total of %d accounts:', data.value.length);
 
-                        var message = new builder.Message()
-                            .attachmentLayout(builder.AttachmentLayout.carousel)
-                            .attachments(data.value.map(cardsAsAttachment));
+                            var message = new builder.Message()
+                                .attachmentLayout(builder.AttachmentLayout.carousel)
+                                .attachments(data.value.map(cardsAsAttachment));
 
-                        session.send(message);
+                            session.send(message);
+                        }
+                        else {
+                            session.send("No accounts found with these filters");
+                            session.replaceDialog('/backToMenu', { source: 'account' });
+                        }
                         
                         function cardsAsAttachment(account) {
                             return new builder.HeroCard()
@@ -71,7 +77,7 @@ module.exports = {
                 }, function(error, response, body){
                     session.dialogData.accountData = body;             
                     next();
-                });            
+                });
             }
         },
 
@@ -111,9 +117,11 @@ module.exports = {
                     break;
             }
         },
-        function(session, results, next) {            
+        function(session, results, next) {
+            var selectedPlatform = " and _taps_platform_value eq " + platforms.technology[results.response.entity][0];
+
             request({
-                url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/taps_appopportunities?$select=taps_name,taps_description,taps_appopportunityid&$filter=_taps_account_value%20eq%20" + session.dialogData.accountid, 
+                url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/taps_appopportunities?$select=taps_name,taps_description,taps_appopportunityid&$filter=_taps_account_value%20eq%20" + session.dialogData.accountid + selectedPlatform,
                 headers: {
                     'Authorization': session.userData.accessTokenCRM,
                 }
@@ -122,13 +130,21 @@ module.exports = {
                     session.dialogData.oppData = body;
                     var data = JSON.parse(body);
                     
-                    session.send('I found total of %d opportunities:', data.value.length);
+                    if(data.value.length > 0) {
+                        session.send('I found total of %d opportunities:', data.value.length);
 
-                    var message = new builder.Message()
-                        .attachmentLayout(builder.AttachmentLayout.carousel)
-                        .attachments(data.value.map(cardsAsAttachment));
+                        var message = new builder.Message()
+                            .attachmentLayout(builder.AttachmentLayout.carousel)
+                            .attachments(data.value.map(cardsAsAttachment));
 
-                    session.send(message);
+                        session.send(message);
+
+                        next();
+                    }
+                    else {
+                        session.send("No opportunities found with these filters");
+                        session.replaceDialog('/backToMenu', { source: 'account' });
+                    }
 
                     function cardsAsAttachment(opp) {
                         return new builder.HeroCard()
@@ -146,7 +162,6 @@ module.exports = {
                             ]);
                     }
                 }
-                next();
             });
         },
 

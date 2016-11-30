@@ -60,14 +60,20 @@ module.exports = {
 
                     accounts = data.value.filter(filterByEntity);
 
-                    session.send('I found total of %d results:', accounts.length);
+                    if(accounts.length > 0) {
+                        session.send('I found total of %d results:', accounts.length);
 
-                    var message = new builder.Message()
-                        .attachmentLayout(builder.AttachmentLayout.carousel)
-                        .attachments(accounts.map(cardsAsAttachment));
+                        var message = new builder.Message()
+                            .attachmentLayout(builder.AttachmentLayout.carousel)
+                            .attachments(accounts.map(cardsAsAttachment));
 
-                    session.send(message);
-                    
+                        session.send(message);                
+                    } else {
+                        session.send("No results found with these filters");
+                    }
+
+                    session.replaceDialog('/backToMenu', { source: 'winwire' });
+
                     function cardsAsAttachment(account) {
                         return new builder.HeroCard()
                             .title(account.columnSet.Title)
@@ -78,8 +84,6 @@ module.exports = {
                                 builder.CardAction.openUrl(session, account.columnSet.Link.Url, 'Learn more')
                             ])
                     }
-
-                    session.replaceDialog('/backToMenu', { source: 'winwire' });
                 }
             });
         }
