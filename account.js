@@ -194,9 +194,9 @@ module.exports = {
 
             if (results.response) {
                 session.send("Here's the opportunity information...");
-                session.send("Name: %s  \nStage: %s", 
+                session.send("Name: %s  \nDescription: %s", 
                 opp.taps_name, 
-                opp.taps_appopportunityid);
+                opp.taps_description);
 
                 session.replaceDialog('/backToMenu', { source: 'account' });
             }
