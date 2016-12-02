@@ -20,14 +20,14 @@
   },
   "homepage": "",
   "dependencies": {
+    "applicationinsights": "^0.16",
     "botbuilder": "^3.4.4",
     "dotenv": "^2.0.0",
-    "express-session": "^1.14.2",
     "node-emoji": "^1.4.1",
+    "passport-azure-ad": "^3.0.3",
     "passport-restify": "^1.0.1",
-    "passport-azure-ad": "^3.0.0",
     "request": "^2.76.0",
     "restify": "^4.2.0",
-    "applicationinsights": "^0.16"
+    "express-session": "^1.14.2"
   }
 }

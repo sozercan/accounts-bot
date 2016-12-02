@@ -1,3 +1,5 @@
+'use strict';
+
 var builder = require('botbuilder');
 var request = require('request');
 var platforms = require("./platforms");
@@ -14,45 +16,51 @@ module.exports = {
                 session.send('Gotcha! Looking for account %s... '  + emoji.get('mag_right'), results.response);
 
                 request({
-                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,name,description&$filter=contains(name,'"+results.response+"')", 
+                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,name,description&$filter=statecode%20eq%200%20and%20startswith(name,'"+results.response+"')", 
                     headers: {
                         'Authorization': session.userData.accessTokenCRM,
                     }
                 }, function(error, response, body){
                     if(!error) {
-                        var data = JSON.parse(body);
-
-                        if(data.value.length > 0) {
-                            session.send('I found total of %d accounts:', data.value.length);
-
-                            var message = new builder.Message()
-                                .attachmentLayout(builder.AttachmentLayout.carousel)
-                                .attachments(data.value.map(cardsAsAttachment));
-
-                            session.send(message);
+                        if(response.statusCode != 200) {
+                            session.send("Something happened " + emoji.get('thunder_cloud_and_rain'));
+                            session.endDialog();
                         }
                         else {
-                            session.send("No accounts found with these filters");
-                            session.replaceDialog('/backToMenu', { source: 'account' });
+                            var data = JSON.parse(body);
+
+                            if(data.value.length > 0) {
+                                session.send('I found total of %d accounts:', data.value.length);
+
+                                var message = new builder.Message()
+                                    .attachmentLayout(builder.AttachmentLayout.carousel)
+                                    .attachments(data.value.map(cardsAsAttachment));
+
+                                session.send(message);
+                            }
+                            else {
+                                session.send("No accounts found with these filters");
+                                session.replaceDialog('/backToMenu', { source: 'account' });
+                            }
+                            
+                            function cardsAsAttachment(account) {
+                                return new builder.HeroCard()
+                                    .images([new builder.CardImage().url("https://logo.clearbit.com/" + account.name + ".com")])
+                                    .title(account.name)
+                                    .text(account.description)
+                                    .buttons([
+                                        new builder.CardAction()
+                                            .title('Select account')
+                                            .type('imBack')
+                                            .value(account.accountid),
+                                        new builder.CardAction()
+                                            .title('View in DXCRM')
+                                            .type('openUrl')
+                                            .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997"),
+                                    ]);
+                            }
+                            next();
                         }
-                        
-                        function cardsAsAttachment(account) {
-                            return new builder.HeroCard()
-                                .images([new builder.CardImage().url("https://logo.clearbit.com/" + account.name + ".com")])
-                                .title(account.name)
-                                .text(account.description)
-                                .buttons([
-                                    new builder.CardAction()
-                                        .title('Select account')
-                                        .type('imBack')
-                                        .value(account.accountid),
-                                    new builder.CardAction()
-                                        .title('View in DXCRM')
-                                        .type('openUrl')
-                                        .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997"),
-                                ]);
-                        }
-                        next();
                     }
                     else {
                         session.send("Something happened " + emoji.get('thunder_cloud_and_rain'));
@@ -70,7 +78,7 @@ module.exports = {
                 session.dialogData.accountid = results.response;
                 
                 request({
-                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,taps_mssalestpid,address1_city,address1_stateorprovince,taps_district,description,statecode,_taps_accountownerid_value&$filter=accountid%20eq%20" + results.response, 
+                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,taps_mssalestpid,address1_city,address1_stateorprovince,taps_district,description,websiteurl,statecode,_taps_accountownerid_value&$filter=accountid%20eq%20" + results.response, 
                     headers: {
                         'Authorization': session.userData.accessTokenCRM,
                     }
@@ -99,13 +107,18 @@ module.exports = {
                         if(!error) {
                             session.dialogData.ownerData = JSON.parse(body);
                             session.send("Here's the account information...");
-                            session.send("Account Owner: %s  \nTPID: %s  \nLocation: %s  \nDistrict: %s  \nDescription: %s  \nStatus: %s", 
+
+                            var accountState;
+                            accountData.value[0].statecode === 0 ? accountState = "Active" :  accountState = "Inactive";
+
+                            session.send("Account Owner: %s  \nTPID: %s  \nLocation: %s  \nDistrict: %s  \nDescription: %s  \nWebsite: %s  \nStatus: %s", 
                             session.dialogData.ownerData.value[0].fullname, 
                             accountData.value[0].taps_mssalestpid, 
                             accountData.value[0].address1_city + ", " + accountData.value[0].address1_stateorprovince,
                             accountData.value[0].taps_district, 
-                            accountData.value[0].description, 
-                            accountData.value[0].statecode);
+                            accountData.value[0].description,
+                            accountData.value[0].websiteurl,
+                            accountState);
 
                             session.replaceDialog('/backToMenu', { source: 'account' });
                         }
@@ -172,7 +185,7 @@ module.exports = {
             var oppData = JSON.parse(session.dialogData.oppData);
             var opp;
 
-            for(o in oppData.value){
+            for(var o in oppData.value){
                 if(results.response == oppData.value[o].taps_appopportunityid){
                     opp = oppData.value[o];
                     break;

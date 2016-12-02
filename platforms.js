@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
     technology: {
         Windows: [
@@ -10,7 +12,7 @@ module.exports = {
             "d819c44b-7ef0-e311-9424-00155dd42412"
         ],
         SQL: [
-            "b6d79bde-af44-e411-941b-002dd80f0157"
+            "52244b44-0d3a-e611-80f2-c4346bac6968"
         ]
     },
     industry: {

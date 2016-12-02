@@ -1,3 +1,5 @@
+'use strict';
+
 var builder = require('botbuilder');
 var request = require('request');
 var platforms = require("./platforms");

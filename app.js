@@ -1,3 +1,5 @@
+'use strict';
+
 const builder = require('botbuilder');
 const restify = require('restify');
 const passport = require('passport-restify');
@@ -5,10 +7,11 @@ const OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
 const expressSession = require('express-session');
 const crypto = require('crypto');
 const querystring = require('querystring');
-var emoji = require('node-emoji');
+const emoji = require('node-emoji');
+const refresh = require('./token');
 require('dotenv').config();
 
-var telemetryModule = require('./telemetry-module.js');
+var telemetryModule = require('./telemetry-module');
 var appInsights = require("applicationinsights");
 appInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
 var appInsightsClient = appInsights.getClient();
@@ -45,7 +48,7 @@ server.get('/', restify.serveStatic({
 
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
-server.use(expressSession({ secret: 'keyboard cat', resave: true, saveUninitialized: false }));
+server.use(expressSession({ secret: process.env.SESSION_SECRET, resave: true, saveUninitialized: false }));
 server.use(passport.initialize());
 
 server.get('/login', function (req, res, next) {
@@ -173,29 +176,18 @@ bot.dialog('/', [
   },
   (session, results, next) => {
     if (session.userData.userName) {  // They're logged in
-    
-      var data = 'grant_type=refresh_token' 
-        + '&refresh_token=' + session.userData.refreshToken
-        + '&client_id=' + process.env.MICROSOFT_CLIENT_ID
-        + '&client_secret=' + encodeURIComponent(process.env.MICROSOFT_CLIENT_SECRET) 
-        + '&resource=' + encodeURIComponent(process.env.MICROSOFT_RESOURCE_GRAPH);
-      var opts = {
-          url: 'https://login.microsoftonline.com/common/oauth2/token',
-          body: data,
-          headers : { 'Content-Type' : 'application/x-www-form-urlencoded' }
-      };
-      require('request').post(opts, function (err, response, body) {
-          if (err) {
-              return next(err)
-          } else {
-              var token = JSON.parse(body);
-              session.userData.accessTokenGraph = token.access_token;
-              session.userData.refreshToken = token.refresh_token;
-          }
-      })
+      refresh(session.userData.refreshToken, (err, body, res) => {
 
-      session.send("Welcome " + session.userData.userName + "! " + emoji.get('smiley'));
-      session.beginDialog('workPrompt');
+        if (err || body.error) {
+          session.send("Something happened " + emoji.get('thunder_cloud_and_rain'));
+          session.endDialog();
+        }
+
+        session.userData.accessTokenCRM = body.accessToken;
+
+        session.send("Welcome " + session.userData.userName + "! " + emoji.get('smiley'));
+        session.beginDialog('workPrompt');
+      });
     } else {
       session.endConversation("Goodbye! " + emoji.get('wave'));
     }
@@ -204,9 +196,6 @@ bot.dialog('/', [
     if (!session.userData.userName) {
       session.endConversation("Goodbye! " + emoji.get('wave') + " You have been logged out.");
     } 
-    // else {
-    //   session.endConversation("Goodbye!! :wave:");
-    // }
   }
 ]);
 
@@ -301,28 +290,16 @@ bot.dialog('validateCode', [
         session.userData.refreshToken = session.userData.loginData.refreshToken;
 
         // getting access token for CRM
-        var data = 'grant_type=refresh_token' 
-          + '&refresh_token=' + session.userData.refreshToken
-          + '&client_id=' + process.env.MICROSOFT_CLIENT_ID
-          + '&client_secret=' + encodeURIComponent(process.env.MICROSOFT_CLIENT_SECRET) 
-          + '&resource=' + encodeURIComponent(process.env.MICROSOFT_RESOURCE_CRM);
-        var opts = {
-            url: 'https://login.microsoftonline.com/common/oauth2/token',
-            body: data,
-            headers : { 'Content-Type' : 'application/x-www-form-urlencoded' }
-        };
-        require('request').post(opts, function (err, response, body) {
-            if (err) {
-                return next(err)
-            } else {
-                var token = JSON.parse(body);
-                session.userData.accessTokenCRM = token.access_token;
-                //session.userData.refreshToken = token.refresh_token;
+        refresh(session.userData.refreshToken, (err, body, res) => {
+          if (err || body.error) {
+            session.send("Something happened " + emoji.get('thunder_cloud_and_rain'));
+            session.endDialog();
+          }
 
-                // TODO: Authorize, then save
-                session.endDialogWithResult({ response: true });
-            }
-        })
+          session.userData.accessTokenCRM = body.accessToken;
+
+          session.endDialogWithResult({ response: true });
+        });
       } else {
         var telemetryData = telemetryModule.createTelemetry(session);
         appInsightsClient.trackEvent("invalidCode", telemetryData);
