@@ -81,7 +81,9 @@ server.get('/api/OAuthCallback/',
     var continueMsg = new builder.Message().address(address).text(JSON.stringify(messageData));
 
     bot.receive(continueMsg.toMessage());
-    res.send('Welcome ' + req.user.displayName + '! Please copy this number and paste it back to your chat so your authentication can complete: ' + magicCode);
+
+    var page = "<!doctype html><style>body{text-align: center; padding: 150px;}h1{font-size: 40px;}body{font: 20px Helvetica, sans-serif; color: #333;}article{display: block; text-align: left; width: 650px; margin: 0 auto;}code{font-family:Consolas,monaco,monospace;}</style><article> <h1>Welcome " + req.user.displayName + "!</h1> <div> <p>Please copy this code and paste it back to your chat so your authentication can complete:</p><code>" + magicCode + "</code></div></article>";
+    res.end(page);
 });
 
 passport.serializeUser(function(user, done) {
