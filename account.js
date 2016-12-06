@@ -90,7 +90,18 @@ module.exports = {
         },
 
         function(session) {
-            builder.Prompts.choice(session, "What would you like to do?", ['Account Information','Opportunities']);
+            var choices = ['Account Information','Opportunities'];
+            var msg = new builder.Message(session)
+                .attachmentLayout(builder.AttachmentLayout.list)
+                .attachments([
+                    new builder.HeroCard(session)
+                        .title("What would you like to do?")
+                        .buttons([
+                            builder.CardAction.imBack(session, choices[0], choices[0]),
+                            builder.CardAction.imBack(session, choices[1], choices[1])
+                        ]),
+            ]);
+            builder.Prompts.choice(session, msg, choices);
         },
         function(session, results, next) {
             switch (results.response.index) {
@@ -126,7 +137,17 @@ module.exports = {
                     break;
                 case 1:
                 default:
-                    builder.Prompts.choice(session, "Which type of opportunities are you interested in?", platforms.technology);
+                    var a = { actions: [] };
+                    for (var i = 0; i < Object.keys(platforms.technology).length; i++) {
+                        var action = Object.keys(platforms.technology)[i];
+                        a.actions.push({ title: action, message: action });
+                    }
+
+                    var msg = new builder.Message()
+                        .setText(session, "Which type of opportunities are you interested in?")
+                        .addAttachment(a);
+
+                    builder.Prompts.choice(session, msg, platforms.technology);
                     break;
             }
         },

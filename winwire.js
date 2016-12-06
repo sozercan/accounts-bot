@@ -10,7 +10,18 @@ module.exports = {
     Label: 'Winwire information',
     Dialog: [
         function (session, args) {
-            builder.Prompts.choice(session, "Would you like to filter by industry area or technology or both?", 'Industry Area|Technology');
+            var choices = ['Industry Area', 'Technology'];
+            var msg = new builder.Message(session)
+                .attachmentLayout(builder.AttachmentLayout.list)
+                .attachments([
+                    new builder.HeroCard(session)
+                        .title("Would you like to filter by industry area or technology?")
+                        .buttons([
+                            builder.CardAction.imBack(session, choices[0], choices[0]),
+                            builder.CardAction.imBack(session, choices[1], choices[1])
+                        ]),
+            ]);
+            builder.Prompts.choice(session, msg, choices);
         },
         function (session, results, next) {
             switch (results.response.index) {
@@ -30,9 +41,31 @@ module.exports = {
 
         function(session) {
             if(session.dialogData.filter == 0){
-                builder.Prompts.choice(session, "Which industry area would you like to filter with?", platforms.industry.type);
+                var a = { actions: [] };
+                for (var i = 0; i < platforms.industry.type.length; i++) {
+                    var action = platforms.industry.type[i];
+                    a.actions.push({ title: action, message: action });
+                }
+
+                var msg = new builder.Message()
+                    .setText(session, "Which industry area would you like to filter with?")
+                    .addAttachment(a);
+
+                builder.Prompts.choice(session, msg, platforms.industry.type);
+                
             } else if (session.dialogData.filter == 1){
-                builder.Prompts.choice(session, "Which technology would you like to filter with?", platforms.technology);
+
+                var a = { actions: [] };
+                for (var i = 0; i < Object.keys(platforms.technology).length; i++) {
+                    var action = Object.keys(platforms.technology)[i];
+                    a.actions.push({ title: action, message: action });
+                }
+
+                var msg = new builder.Message()
+                    .setText(session, "Which technology would you like to filter with?")
+                    .addAttachment(a);
+
+                builder.Prompts.choice(session, msg, platforms.technology);
             }
         },
         function(session, results, next) {

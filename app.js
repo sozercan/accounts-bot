@@ -201,10 +201,20 @@ bot.dialog('/', [
 
 bot.dialog('workPrompt', [
     (session) => {
-        // prompt for search option
+        var msg = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.list)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("What would you like to do?")
+                    .buttons([
+                        builder.CardAction.imBack(session, Account.Label, Account.Label),
+                        builder.CardAction.imBack(session, Winwire.Label, Winwire.Label),
+                        builder.CardAction.imBack(session, Logout.Label, Logout.Label)
+                    ]),
+            ]);
         builder.Prompts.choice(
             session,
-            'What would you like to do?',
+            msg,
             [Account.Label, Winwire.Label, Logout.Label],
             {
                 maxRetries: 3,
