@@ -52,7 +52,7 @@ module.exports = {
                     .addAttachment(a);
 
                 builder.Prompts.choice(session, msg, platforms.industry.type);
-                
+
             } else if (session.dialogData.filter == 1){
 
                 var a = { actions: [] };
@@ -114,7 +114,7 @@ module.exports = {
                             .title(account.columnSet.Title)
                             .subtitle(account.columnSet.Solution)
                             .text(account.columnSet.Summary)
-                            .images([new builder.CardImage().url("https://logo.clearbit.com/" + account.columnSet.Title.split(' ').join('') + ".com")])
+                            .images([new builder.CardImage().url("http://image.thum.io/get/http://" + account.columnSet.Title.split(' ').join('') + ".com")])
                             .buttons([
                                 builder.CardAction.openUrl(session, account.columnSet.Link.Url, 'Learn more')
                             ])
