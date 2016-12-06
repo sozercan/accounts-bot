@@ -16,7 +16,7 @@ module.exports = {
                 session.send('Gotcha! Looking for account %s... '  + emoji.get('mag_right'), results.response);
 
                 request({
-                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,name,description&$filter=statecode%20eq%200%20and%20startswith(name,'"+results.response+"')", 
+                    url: process.env.MICROSOFT_RESOURCE_CRM + "/api/data/v8.1/accounts?$select=accountid,name,websiteurl,description&$filter=statecode%20eq%200%20and%20startswith(name,'"+results.response+"')", 
                     headers: {
                         'Authorization': session.userData.accessTokenCRM,
                     }
@@ -42,10 +42,17 @@ module.exports = {
                                 session.send("No accounts found with these filters");
                                 session.replaceDialog('/backToMenu', { source: 'account' });
                             }
-                            
+
                             function cardsAsAttachment(account) {
+                                var cardImageUrl;
+                                if(account.websiteurl) {
+                                    cardImageUrl = "http://image.thum.io/get/" + account.websiteurl;
+                                } else {
+                                    cardImageUrl = "https://logo.clearbit.com/" + account.name + ".com";
+                                }
+
                                 return new builder.HeroCard()
-                                    .images([new builder.CardImage().url("https://logo.clearbit.com/" + account.name + ".com")])
+                                    .images([new builder.CardImage().url(cardImageUrl)])
                                     .title(account.name)
                                     .text(account.description)
                                     .buttons([
