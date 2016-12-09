@@ -8,10 +8,10 @@ const expressSession = require('express-session');
 const crypto = require('crypto');
 const querystring = require('querystring');
 const emoji = require('node-emoji');
-const refresh = require('./token');
+const refresh = require('./helpers/token');
 require('dotenv').config();
 
-var telemetryModule = require('./telemetry-module');
+var telemetryModule = require('./helpers/telemetry-module');
 var appInsights = require("applicationinsights");
 appInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
 var appInsightsClient = appInsights.getClient();
@@ -151,13 +151,15 @@ function login(session) {
 }
 
 // Dialogs
-var Account = require('./account');
-var Winwire = require('./winwire');
-var Logout = require('./logout');
-var backToMenu = require('./backToMenu');
+var Account = require('./dialogs/account');
+var Find = require('./dialogs/find');
+var Winwire = require('./dialogs/winwire');
+var Logout = require('./dialogs/logout');
+var backToMenu = require('./dialogs/backToMenu');
 
 // Setup dialogs
 bot.dialog('/account', Account.Dialog);
+bot.dialog('/find', Find.Dialog);
 bot.dialog('/winwire', Winwire.Dialog);
 bot.dialog('/logout', Logout.Dialog);
 bot.dialog('/backToMenu', backToMenu.Dialog);
@@ -210,6 +212,7 @@ bot.dialog('workPrompt', [
                     .title("What would you like to do?")
                     .buttons([
                         builder.CardAction.imBack(session, Account.Label, Account.Label),
+                        builder.CardAction.imBack(session, Find.Label, Find.Label),
                         builder.CardAction.imBack(session, Winwire.Label, Winwire.Label),
                         builder.CardAction.imBack(session, Logout.Label, Logout.Label)
                     ]),
@@ -217,7 +220,7 @@ bot.dialog('workPrompt', [
         builder.Prompts.choice(
             session,
             msg,
-            [Account.Label, Winwire.Label, Logout.Label],
+            [Account.Label, Find.Label, Winwire.Label, Logout.Label],
             {
                 maxRetries: 3,
                 retryPrompt: 'Not a valid option'
@@ -240,7 +243,9 @@ bot.dialog('workPrompt', [
         var selection = result.response.entity;
         switch (selection) {
             case Account.Label:
-                return session.beginDialog('/account')
+                return session.beginDialog('/account');
+            case Find.Label:
+                return session.beginDialog('/find');
             case Winwire.Label:
                 return session.beginDialog('/winwire');
             case Logout.Label:

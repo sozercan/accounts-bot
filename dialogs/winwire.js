@@ -2,7 +2,7 @@
 
 var builder = require('botbuilder');
 var request = require('request');
-var platforms = require("./platforms");
+var platforms = require("../data/platforms");
 var backToMenu = require("./backToMenu");
 var emoji = require('node-emoji');
 
@@ -10,12 +10,12 @@ module.exports = {
     Label: 'Winwire information',
     Dialog: [
         function (session, args) {
-            var choices = ['Industry Area', 'Technology'];
+            var choices = ['Industry', 'Technology'];
             var msg = new builder.Message(session)
                 .attachmentLayout(builder.AttachmentLayout.list)
                 .attachments([
                     new builder.HeroCard(session)
-                        .title("Would you like to filter by industry area or technology?")
+                        .title("Would you like to filter by industry or technology?")
                         .buttons([
                             builder.CardAction.imBack(session, choices[0], choices[0]),
                             builder.CardAction.imBack(session, choices[1], choices[1])
@@ -26,7 +26,7 @@ module.exports = {
         function (session, results, next) {
             switch (results.response.index) {
                 case 0:
-                    session.send("Got it! Filtering by industry area..." + emoji.get("office"));
+                    session.send("Got it! Filtering by industry..." + emoji.get("office"));
                     session.dialogData.filter = 0;
                     break;
                 case 1:
@@ -48,7 +48,7 @@ module.exports = {
                 }
 
                 var msg = new builder.Message()
-                    .setText(session, "Which industry area would you like to filter with?")
+                    .text("Which industry area would you like to filter with?")
                     .addAttachment(a);
 
                 builder.Prompts.choice(session, msg, platforms.industry.type);
@@ -62,7 +62,7 @@ module.exports = {
                 }
 
                 var msg = new builder.Message()
-                    .setText(session, "Which technology would you like to filter with?")
+                    .text("Which technology would you like to filter with?")
                     .addAttachment(a);
 
                 builder.Prompts.choice(session, msg, platforms.technology);

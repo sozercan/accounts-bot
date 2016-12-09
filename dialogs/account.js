@@ -2,7 +2,7 @@
 
 var builder = require('botbuilder');
 var request = require('request');
-var platforms = require("./platforms");
+var platforms = require("../data/platforms");
 var emoji = require('node-emoji');
 
 module.exports = {
@@ -63,7 +63,7 @@ module.exports = {
                                         new builder.CardAction()
                                             .title('View in DXCRM')
                                             .type('openUrl')
-                                            .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997"),
+                                            .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997")
                                     ]);
                             }
                             next();
