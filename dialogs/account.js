@@ -63,7 +63,11 @@ module.exports = {
                                         new builder.CardAction()
                                             .title('View in DXCRM')
                                             .type('openUrl')
-                                            .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997")
+                                            .value(process.env.MICROSOFT_RESOURCE_CRM + "/main.aspx?etc=1&id="+account.accountid+"&pagetype=entityrecord#908391997"),
+                                        new builder.CardAction()
+                                            .title('View in AppCatalog')
+                                            .type('openUrl')
+                                            .value('https://msgtm.azurewebsites.net/en-US/Dashboard/Account/'+account.accountid)
                                     ]);
                             }
                             next();
