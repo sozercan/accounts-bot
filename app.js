@@ -36,6 +36,8 @@ var bot = new builder.UniversalBot(connector, {
     persistConversationData: true
 });
 
+bot.use(builder.Middleware.sendTyping());
+
 server.post('/api/messages', connector.listen());
 server.get('/', restify.serveStatic({
   'directory': __dirname,
@@ -142,7 +144,7 @@ function login(session) {
   var msg = new builder.Message(session) 
     .attachments([ 
         new builder.SigninCard(session) 
-            .text("Let's get started! " + emoji.get('smiley') + "\n\nPlease sign-in below...") 
+            .text("Let's get started! " + emoji.get('smiley') + " Please sign-in below...") 
             .button("Sign-In", link) 
     ]); 
   session.send(msg);
@@ -229,7 +231,7 @@ bot.dialog('workPrompt', [
         function (session, result) {
         if (!result.response) {
             // exhausted attemps and no selection, start over
-            session.send('Ooops! Too many attemps :( But don\'t worry, I\'m handling that exception and you can try again!');
+            session.send('Ooops! Too many attemps ' + emoji.get("slightly_frowning_face") + ' But don\'t worry, I\'m handling that exception and you can try again!');
             return session.endDialog();
         }
 
